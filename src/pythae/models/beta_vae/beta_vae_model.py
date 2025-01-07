@@ -40,6 +40,7 @@ class BetaVAE(VAE):
         encoder: Optional[BaseEncoder] = None,
         decoder: Optional[BaseDecoder] = None,
     ):
+
         VAE.__init__(self, model_config=model_config, encoder=encoder, decoder=decoder)
 
         self.model_name = "BetaVAE"
@@ -67,32 +68,40 @@ class BetaVAE(VAE):
         z, eps = self._sample_gauss(mu, std)
         recon_x = self.decoder(z)["reconstruction"]
 
-        loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
+        # loss, recon_loss, kld = self.loss_function(recon_x, x, mu, log_var, z)
 
         output = ModelOutput(
-            recon_loss=recon_loss,
-            reg_loss=kld,
-            loss=loss,
+            # recon_loss=recon_loss,
+            # reg_loss=kld,
+            # loss=loss,
             recon_x=recon_x,
-            z=z,
+            # z=z,
+            mu=mu,
+            log_var=log_var,
         )
 
         return output
 
-    def loss_function(self, recon_x, x, mu, log_var, z):
-        if self.model_config.reconstruction_loss == "mse":
-            recon_loss = 0.5 * F.mse_loss(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction="none",
-            ).sum(dim=-1)
+    def loss_function(self, recon_loss, mu, log_var):
 
-        elif self.model_config.reconstruction_loss == "bce":
-            recon_loss = F.binary_cross_entropy(
-                recon_x.reshape(x.shape[0], -1),
-                x.reshape(x.shape[0], -1),
-                reduction="none",
-            ).sum(dim=-1)
+        # if self.model_config.reconstruction_loss == "mse":
+
+        #     recon_loss = (
+        #         0.5
+        #         * F.mse_loss(
+        #             recon_x.reshape(x.shape[0], -1),
+        #             x.reshape(x.shape[0], -1),
+        #             reduction="none",
+        #         ).sum(dim=-1)
+        #     )
+
+        # elif self.model_config.reconstruction_loss == "bce":
+
+        #     recon_loss = F.binary_cross_entropy(
+        #         recon_x.reshape(x.shape[0], -1),
+        #         x.reshape(x.shape[0], -1),
+        #         reduction="none",
+        #     ).sum(dim=-1)
 
         KLD = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=-1)
 
